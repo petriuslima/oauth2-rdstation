@@ -2,7 +2,7 @@
 
 namespace Petriuslima\OAuth2\Client\Provider;
 
-use \League\OAuth2\Client\Provider\AbstractProvider;
+use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
@@ -25,12 +25,12 @@ class RDStation extends AbstractProvider
 
     public function getBaseAuthorizationUrl()
     {
-        return $this->host.'/auth/dialog';
+        return $this->host . '/auth/dialog';
     }
 
     public function getBaseAccessTokenUrl(array $params)
     {
-        return $this->host.'/auth/token';
+        return $this->host . '/auth/token';
     }
 
     public function getResourceOwnerDetailsUrl(AccessToken $token)
@@ -45,6 +45,8 @@ class RDStation extends AbstractProvider
 
     public function getAccessToken($grant, array $options = [])
     {
+        // Copy parent method to replace request_uri to request_url
+
         $grant = $this->verifyGrant($grant);
 
         $params = [
@@ -56,11 +58,13 @@ class RDStation extends AbstractProvider
         $params   = $grant->prepareRequestParameters($params, $options);
         $request  = $this->getAccessTokenRequest($params);
         $response = $this->getParsedResponse($request);
+
         if (false === is_array($response)) {
             throw new UnexpectedValueException(
                 'Invalid response received from Authorization Server. Expected JSON.'
             );
         }
+
         $prepared = $this->prepareAccessTokenResponse($response);
         $token    = $this->createAccessToken($prepared, $grant);
 
@@ -69,6 +73,8 @@ class RDStation extends AbstractProvider
 
     protected function getAuthorizationParameters(array $options)
     {
+        // Copy parent method to replace request_uri to request_url
+
         if (empty($options['state'])) {
             $options['state'] = $this->getRandomState();
         }
@@ -105,13 +111,17 @@ class RDStation extends AbstractProvider
     {
         if (!empty($data[$this->responseError])) {
             $error = $data[$this->responseError];
+
             if (!is_string($error)) {
                 $error = var_export($error, true);
             }
+
             $code  = $this->responseCode && !empty($data[$this->responseCode])? $data[$this->responseCode] : 0;
+
             if (!is_int($code)) {
                 $code = intval($code);
             }
+
             throw new IdentityProviderException($error, $code, $data);
         }
     }
