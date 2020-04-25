@@ -2,6 +2,8 @@
 
 namespace Petriuslima\OAuth2\Client\Tests\Provider;
 
+use Mockery as m;
+
 class RDStationTest extends \PHPUnit\Framework\TestCase
 {
     public function setUp(): void
@@ -58,5 +60,22 @@ class RDStationTest extends \PHPUnit\Framework\TestCase
         $uri = parse_url($url);
 
         $this->assertEquals('/auth/token', $uri['path']);
+    }
+
+    public function testGetAccessToken()
+    {
+        $response = m::mock('Psr\Http\Message\ResponseInterface');
+        $response->shouldReceive('getBody')->andReturn('{"access_token":"mock_access_token","user_id": "123"}');
+        $response->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+
+        $client = m::mock('GuzzleHttp\ClientInterface');
+        $client->shouldReceive('send')->times(1)->andReturn($response);
+        $this->provider->setHttpClient($client);
+
+        $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
+
+        $this->assertEquals('mock_access_token', $token->getToken());
+        $this->assertNull($token->getExpires());
+        $this->assertNull($token->getRefreshToken());
     }
 }
